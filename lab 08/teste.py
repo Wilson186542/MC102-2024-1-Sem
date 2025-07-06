@@ -1,0 +1,2 @@
+banana = []
+print (len(banana))

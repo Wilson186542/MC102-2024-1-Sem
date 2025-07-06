@@ -1,0 +1,113 @@
+###################################################
+# MC102 - Algoritmos e Programação de Computadores
+# Laboratório 15 - Pac-Man II
+# Nome: Wilson Santos Neto
+# RA: 186542
+###################################################
+
+
+def copia_do_mapa(matriz_original):
+#Devolve uma cópia do mapa pegando ela linha por linha
+    return [linha[:] for linha in matriz_original]
+
+def possiveis_caminhos(orientacao):
+    if orientacao == "Cima":
+        return ["Cima", "Esquerda", "Direita"]
+    elif orientacao == "Baixo":
+        return ["Baixo", "Esquerda", "Direita"]
+    elif orientacao == "Esquerda":
+        return ["Cima", "Baixo", "Esquerda"]
+    elif orientacao == "Direita":
+        return ["Cima", "Baixo", "Direita"]
+
+#A função principal
+def simula_caminho(mapa, y, x, orientacao, poder, T, pastilhas):
+
+#Iniciar, a principio não impedido:
+    eh_parede = "n"
+#Ver para onde se pode andar, e atualizar posições
+    if orientacao == "Esquerda":
+#O módulo ajusta no caso de se estar na beira e então o pacman mudar de lado, teletransportando
+        x = (x - 1) % len(mapa[0])
+    elif orientacao == "Direita":
+        x = (x + 1) % len(mapa[0])
+    elif orientacao == "Cima":
+        y = (y - 1) % len(mapa)
+    elif orientacao == "Baixo":
+        y = (y + 1) % len(mapa)
+
+#Criar variável que só ativa quando morrer:
+    morto = "n"
+#Olhar se não superou:
+    maximo = "n"
+
+#Coletar pastilha normal
+    if mapa[y][x] == ".":
+        pastilhas += 1
+        mapa[y][x] = "0"
+
+#Coletar poder
+    if mapa[y][x] == "*":
+        pastilhas += 1
+        mapa[y][x] = "0"
+        poder = 1 + T
+
+#No fantasma, matar ou morrer (poético)
+    if mapa[y][x] == "X":
+        if poder > 0:
+            mapa[y][x] = "0"
+        else:
+            morto = "s"
+            pastilhas = 0
+
+#Verificar se tem parede
+    elif mapa[y][x] == "#":
+        eh_parede = "s"
+    else:
+        contagem = mapa[y][x]
+#Para que eu deixe ele passar pelo mesmo lugar ao menos mais uma vez, vai se tem vários caminhos futuros que preciso passar denovo por um corredor
+        if int(contagem) > 2:
+            maximo = "s"
+        else:
+#Conta passagem
+            mapa[y][x] = str(int(contagem) + 1)
+            
+#Se puder andar
+    if ((morto + eh_parede + maximo) == "nnn"):
+        pastilhas_em_loop = []
+#Testar todos os jeitos
+        for orientacao_andar in possiveis_caminhos(orientacao):
+            pastilhas_em_loop.append(simula_caminho(copia_do_mapa(mapa), y, x, orientacao_andar, poder - 1, T, pastilhas))
+        pastilhas = max(pastilhas_em_loop)
+#Dar return no que conseguiu
+    return pastilhas
+
+# Leitura da entrada
+N = int(input())
+T = int(input())
+
+# Inicialização do mapa
+mapa = []
+for a in range(N):
+    mapa.append(list(input()))
+largura = len(mapa[0])
+
+#Encontra a posição inicial do Pac-Man
+for y in range(N):
+    for x in range(largura):
+        if mapa[y][x] == "C":
+            x_pacman_inicial = x
+            y_pacman_inicial = y
+
+pastilhas_possibilidades_iniciais = []
+poder = 0
+pastilhas = 0
+# Ir marcando onde se passou
+mapa[y_pacman_inicial][x_pacman_inicial] = "0"
+
+#Testa os 4 inicios possíveis
+for orientacao_inicial in ["Cima", "Baixo", "Esquerda", "Direita"]:
+    pastilhas_possibilidades_iniciais.append(simula_caminho(copia_do_mapa(mapa), y_pacman_inicial, x_pacman_inicial, orientacao_inicial, poder, T, 0))
+
+#Dá de saida aquilo que se obteve de maior de todos os possiveis inicios e possibilidades de cada
+print(max(pastilhas_possibilidades_iniciais))
